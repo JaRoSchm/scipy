@@ -29,6 +29,7 @@ __all__ = [  # noqa: F822
     'h1vp',
     'h2vp',
     'hankel1',
+    'hankel1_all',
     'hankel2',
     'iv',
     'ivp',

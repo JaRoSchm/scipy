@@ -53,6 +53,10 @@ void sph_harm_map_dims(const npy_intp *dims, npy_intp *new_dims) {
     new_dims[1] = dims[1];
 }
 
+void bessel_output_dims(const npy_intp* dims, npy_intp* new_dims) {
+    new_dims[0] = dims[2];
+}
+
 PyMODINIT_FUNC PyInit__gufuncs() {
     import_array();
     import_umath();
@@ -238,6 +242,17 @@ PyMODINIT_FUNC PyInit__gufuncs() {
         xsf::numpy::gufunc({static_cast<xsf::numpy::d_d1d1>(xsf::rcty), static_cast<xsf::numpy::f_f1f1>(xsf::rcty)}, 2,
                            "_rcty", rcty_doc, "()->(np1),(np1)", legendre_map_dims<2>);
     PyModule_AddObjectRef(_gufuncs, "_rcty", _rcty);
+
+    PyObject* hankel1_all =
+        xsf::numpy::gufunc({xsf::numpy::compose{xsf::numpy::use_long_long_int()},
+                            [](double v, std::complex<double> z, int n, xsf::numpy::cdouble_1d cy) {
+                                xsf::cyl_hankel_1_all(v, z, n, cy);
+                            },
+                            [](float v, std::complex<float> z, int n, xsf::numpy::cfloat_1d cy) {
+                                xsf::cyl_hankel_1_all(v, z, n, cy);
+                            }},
+                           1, "hankel1_all", nullptr, "(),(),()->(i)", bessel_output_dims);
+    PyModule_AddObjectRef(_gufuncs, "hankel1_all", hankel1_all);
 
     return _gufuncs;
 }
