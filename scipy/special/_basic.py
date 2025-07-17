@@ -15,7 +15,7 @@ from ._ufuncs import (mathieu_a, mathieu_b, iv, jv, gamma, rgamma,
                       psi, hankel1, hankel2, yv, kv, poch, binom,
                       _stirling2_inexact)
 
-from ._gufuncs import _lqn, _lqmn, _rctj, _rcty
+from ._gufuncs import _lqn, _lqmn, _rctj, _rcty, hankel1_all
 from ._input_validation import _nonneg_int_or_fail
 from . import _specfun
 from ._comb import _comb_int
@@ -43,6 +43,7 @@ __all__ = [
     'fresnels_zeros',
     'h1vp',
     'h2vp',
+    'hankel1_all',
     'ivp',
     'jn_zeros',
     'jnjnp_zeros',

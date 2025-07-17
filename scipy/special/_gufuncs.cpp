@@ -57,6 +57,9 @@ void _poisson_binom_map_dims(const npy_intp *dims, npy_intp *new_dims) {
     new_dims[0] = dims[0];
 }
 
+void bessel_output_dims(const npy_intp* dims, npy_intp* new_dims) {
+    new_dims[0] = dims[2];
+}
 
 // Helper to wrap a 1D std::vector in a contiguous mdspan
 template <typename T>
@@ -330,6 +333,17 @@ _gufuncs_module_exec(PyObject *module)
         _poisson_binom_map_dims
     );
     PyModule_AddObjectRef(module, "_poisson_binom_cdf", _poisson_binom_cdf);
+
+    PyObject* hankel1_all =
+        xsf::numpy::gufunc({xsf::numpy::compose{xsf::numpy::use_long_long_int()},
+                            [](double v, std::complex<double> z, int n, xsf::numpy::cdouble_1d cy) {
+                                xsf::cyl_hankel_1_all(v, z, n, cy);
+                            },
+                            [](float v, std::complex<float> z, int n, xsf::numpy::cfloat_1d cy) {
+                                xsf::cyl_hankel_1_all(v, z, n, cy);
+                            }},
+                           1, "hankel1_all", nullptr, "(),(),()->(i)", bessel_output_dims);
+    PyModule_AddObjectRef(module, "hankel1_all", hankel1_all);
 
     return 0;
 }
