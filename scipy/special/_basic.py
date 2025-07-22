@@ -15,7 +15,7 @@ from ._ufuncs import (mathieu_a, mathieu_b, iv, jv, gamma, rgamma,
                       psi, hankel1, hankel2, yv, kv, poch, binom,
                       _stirling2_inexact)
 
-from ._gufuncs import _lqn, _lqmn, _rctj, _rcty, hankel1_all
+from ._gufuncs import _lqn, _lqmn, _rctj, _rcty, _hankel1_all
 from ._input_validation import _nonneg_int_or_fail
 from . import _specfun
 from ._comb import _comb_int
@@ -1990,6 +1990,29 @@ def lqn(n, z):
                   np.moveaxis(qd, 0, -1)))
 
     return qn[:(n+1)], qd[:(n+1)]
+
+
+def hankel1_all(v, z, n):
+    """..."""
+    n = _nonneg_int_or_fail(n, 'n', strict=False)
+    if (n < 1):
+        n = 1
+
+    z = np.asarray(z)
+
+    if z.dtype in (np.complex128, np.float64):
+        output_dtype = np.complex128
+    else:
+        output_dtype = np.complex64
+
+    cy = np.empty((n, *z.shape), dtype=output_dtype)
+
+    if (z.ndim == 0):
+        _hankel1_all(v, z, n, out=(cy,))
+    else:
+        _hankel1_all(v, z, n, out=(np.moveaxis(cy, 0, -1),))
+
+    return cy
 
 
 def ai_zeros(nt):
