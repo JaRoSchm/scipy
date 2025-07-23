@@ -332,7 +332,7 @@ _gufuncs_module_exec(PyObject *module)
     );
     PyModule_AddObjectRef(module, "_poisson_binom_cdf", _poisson_binom_cdf);
 
-    PyObject* _hankel1_all =
+    PyObject *_hankel1_all =
         xsf::numpy::gufunc({xsf::numpy::compose{xsf::numpy::use_long_long_int()},
                             static_cast<xsf::numpy::dDi_D1>(xsf::cyl_hankel_1_all),
                             static_cast<xsf::numpy::fFi_F1>(xsf::cyl_hankel_1_all)},

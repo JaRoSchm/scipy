@@ -1995,6 +1995,8 @@ def lqn(n, z):
 def hankel1_all(v, z, n, *, diff_n=0):
     """..."""
     n = _nonneg_int_or_fail(n, 'n', strict=False)
+    if not isscalar(v):
+        raise ValueError("v must be a scalar.")
     # TODO: the above only checks that n is a non-negative integer,
     # but it actually needs to be a positive integer.
     if (n < 1):
