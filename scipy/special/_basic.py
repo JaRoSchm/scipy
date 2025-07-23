@@ -2039,7 +2039,11 @@ def hankel1_all(v, z, n, *, diff_n=0):
 
     if n_neg != 0:
         # https://dlmf.nist.gov/10.4#E6
-        cy[0] = cy[0, ::-1] * np.exp(1j*np.pi*np.arange(v+n_neg-1, v-1, -1))
+        # cy[0] = cy[0, ::-1] * np.exp(1j*np.pi*np.arange(v+n_neg-1, v-1, -1))
+        exp_v = np.arange(v + n_neg - 1, v - 1, -1)
+        cy[0] = cy[0, ::-1] * np.exp(
+            1j * np.pi * exp_v.reshape((*exp_v.shape, *(1,) * z.ndim))
+        )
 
         if not all_neg:
             # compute positive orders and concatenate
@@ -2056,7 +2060,9 @@ def hankel1_all(v, z, n, *, diff_n=0):
         indices = np.arange(diff_n - k, diff_n + 1 + k, 2)
         n_k = np.arange(k + 1)
         kernel[indices] = (-1)**n_k * binom(k, n_k) / 2**k
-        cy[k, diff_n:-diff_n] = np.convolve(cy[0], kernel[::-1], mode="valid")
+        # cy[k, diff_n:-diff_n] = np.convolve(cy[0], kernel[::-1], mode="valid")
+        cy[k, diff_n:-diff_n] = np.apply_along_axis(
+            lambda x: np.convolve(x, kernel[::-1], mode="valid"), 0, cy[0])
 
     if diff_n > 0:
         # remove the first and last diff_n orders which were only needed for
