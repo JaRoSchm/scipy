@@ -1995,6 +1995,8 @@ def lqn(n, z):
 def hankel1_all(v, z, n):
     """..."""
     n = _nonneg_int_or_fail(n, 'n', strict=False)
+    # TODO: the above only checks that n is a non-negative integer,
+    # but it actually needs to be a positive integer.
     if (n < 1):
         n = 1
 
@@ -2005,12 +2007,40 @@ def hankel1_all(v, z, n):
     else:
         output_dtype = np.complex64
 
+    # handle negative orders using https://dlmf.nist.gov/10.4#E6
+    # One has to distinguish between the case where all orders are negative
+    # and the case where some orders are negative and some are positive.
+    # In the latter case, the negative orders are computed first,
+    # then the positive orders are computed and concatenated to the result.
+    # TODO: move to a separate function to avoid code duplication for other
+    # Bessel functions.
+    n_neg = 0
+    if v < 0:
+        # number of negative orders
+        n_neg = min(-int(v) + 1, n)
+        n_pos = n - n_neg
+        all_neg = n_neg == n
+
+        v = -v - n_neg + 1
+
+        if not all_neg:
+            n = n_neg
+
     cy = np.empty((n, *z.shape), dtype=output_dtype)
 
     if (z.ndim == 0):
         _hankel1_all(v, z, n, out=(cy,))
     else:
         _hankel1_all(v, z, n, out=(np.moveaxis(cy, 0, -1),))
+
+    if n_neg != 0:
+        # https://dlmf.nist.gov/10.4#E6
+        cy = cy[::-1] * np.exp(1j*np.pi*np.arange(v+n_neg-1, v-1, -1))
+
+        if not all_neg:
+            # compute positive orders and concatenate
+            cy_pos = hankel1_all(-v + 1, z, n_pos)
+            cy = np.concatenate((cy, cy_pos), axis=0, dtype=output_dtype)
 
     return cy
 
