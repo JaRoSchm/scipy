@@ -1992,7 +1992,7 @@ def lqn(n, z):
     return qn[:(n+1)], qd[:(n+1)]
 
 
-def hankel1_all(v, z, n):
+def hankel1_all(v, z, n, *, diff_n=0):
     """..."""
     n = _nonneg_int_or_fail(n, 'n', strict=False)
     # TODO: the above only checks that n is a non-negative integer,
@@ -2001,6 +2001,10 @@ def hankel1_all(v, z, n):
         n = 1
 
     z = np.asarray(z)
+
+    # for derivates more orders are needed
+    v = v - diff_n
+    n = n + 2*diff_n
 
     if z.dtype in (np.complex128, np.float64):
         output_dtype = np.complex128
@@ -2026,21 +2030,38 @@ def hankel1_all(v, z, n):
         if not all_neg:
             n = n_neg
 
-    cy = np.empty((n, *z.shape), dtype=output_dtype)
+    cy = np.empty((diff_n + 1, n, *z.shape), dtype=output_dtype)
 
     if (z.ndim == 0):
-        _hankel1_all(v, z, n, out=(cy,))
+        _hankel1_all(v, z, n, out=(cy[0],))
     else:
-        _hankel1_all(v, z, n, out=(np.moveaxis(cy, 0, -1),))
+        _hankel1_all(v, z, n, out=(np.moveaxis(cy[0], 0, -1),))
 
     if n_neg != 0:
         # https://dlmf.nist.gov/10.4#E6
-        cy = cy[::-1] * np.exp(1j*np.pi*np.arange(v+n_neg-1, v-1, -1))
+        cy[0] = cy[0, ::-1] * np.exp(1j*np.pi*np.arange(v+n_neg-1, v-1, -1))
 
         if not all_neg:
             # compute positive orders and concatenate
-            cy_pos = hankel1_all(-v + 1, z, n_pos)
-            cy = np.concatenate((cy, cy_pos), axis=0, dtype=output_dtype)
+            cy_pos = np.empty((diff_n + 1, n_pos, *z.shape), dtype=output_dtype)
+            cy_pos[0] = hankel1_all(-v + 1, z, n_pos)
+            cy = np.concatenate((cy, cy_pos), axis=1, dtype=output_dtype)
+
+    # TODO: move to a separate function to avoid code duplication for other
+    # Bessel functions.
+    for k in range(1, diff_n + 1):
+        # https://dlmf.nist.gov/10.6#E7 where the sum is computed using
+        # a convolution
+        kernel = np.zeros(2 * diff_n + 1)
+        indices = np.arange(diff_n - k, diff_n + 1 + k, 2)
+        n_k = np.arange(k + 1)
+        kernel[indices] = (-1)**n_k * binom(k, n_k) / 2**k
+        cy[k, diff_n:-diff_n] = np.convolve(cy[0], kernel[::-1], mode="valid")
+
+    if diff_n > 0:
+        # remove the first and last diff_n orders which were only needed for
+        # the derivatives
+        cy = cy[:, diff_n:-diff_n].astype(output_dtype)
 
     return cy
 
