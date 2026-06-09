@@ -2005,8 +2005,8 @@ def hankel1_all(v, z, n, *, diff_n=0):
     z = np.asarray(z)
 
     # for derivates more orders are needed
-    v = v - diff_n
-    n = n + 2*diff_n
+    # v = v - diff_n
+    # n = n + 2*diff_n
 
     if z.dtype in (np.complex128, np.float64):
         output_dtype = np.complex128
@@ -2020,56 +2020,56 @@ def hankel1_all(v, z, n, *, diff_n=0):
     # then the positive orders are computed and concatenated to the result.
     # TODO: move to a separate function to avoid code duplication for other
     # Bessel functions.
-    n_neg = 0
-    if v < 0:
-        # number of negative orders
-        n_neg = min(-int(v) + 1, n)
-        n_pos = n - n_neg
-        all_neg = n_neg == n
-
-        v = -v - n_neg + 1
-
-        if not all_neg:
-            n = n_neg
+    # n_neg = 0
+    # if v < 0:
+    #     # number of negative orders
+    #     n_neg = min(-int(v) + 1, n)
+    #     n_pos = n - n_neg
+    #     all_neg = n_neg == n
+    #
+    #     v = -v - n_neg + 1
+    #
+    #     if not all_neg:
+    #         n = n_neg
 
     cy = np.empty((diff_n + 1, n, *z.shape), dtype=output_dtype)
 
     if (z.ndim == 0):
-        _hankel1_all(v, z, n, out=(cy[0],))
+        _hankel1_all(v, z, out=(cy[0],))
     else:
-        _hankel1_all(v, z, n, out=(np.moveaxis(cy[0], 0, -1),))
+        _hankel1_all(v, z, out=(np.moveaxis(cy[0], 0, -1),))
 
-    if n_neg != 0:
-        # https://dlmf.nist.gov/10.4#E6
-        # cy[0] = cy[0, ::-1] * np.exp(1j*np.pi*np.arange(v+n_neg-1, v-1, -1))
-        exp_v = np.arange(v + n_neg - 1, v - 1, -1)
-        cy[0] = cy[0, ::-1] * np.exp(
-            1j * np.pi * exp_v.reshape((*exp_v.shape, *(1,) * z.ndim))
-        )
-
-        if not all_neg:
-            # compute positive orders and concatenate
-            cy_pos = np.empty((diff_n + 1, n_pos, *z.shape), dtype=output_dtype)
-            cy_pos[0] = hankel1_all(-v + 1, z, n_pos)
-            cy = np.concatenate((cy, cy_pos), axis=1, dtype=output_dtype)
+    # if n_neg != 0:
+    #     # https://dlmf.nist.gov/10.4#E6
+    #     # cy[0] = cy[0, ::-1] * np.exp(1j*np.pi*np.arange(v+n_neg-1, v-1, -1))
+    #     exp_v = np.arange(v + n_neg - 1, v - 1, -1)
+    #     cy[0] = cy[0, ::-1] * np.exp(
+    #         1j * np.pi * exp_v.reshape((*exp_v.shape, *(1,) * z.ndim))
+    #     )
+    #
+    #     if not all_neg:
+    #         # compute positive orders and concatenate
+    #         cy_pos = np.empty((diff_n + 1, n_pos, *z.shape), dtype=output_dtype)
+    #         cy_pos[0] = hankel1_all(-v + 1, z, n_pos)
+    #         cy = np.concatenate((cy, cy_pos), axis=1, dtype=output_dtype)
 
     # TODO: move to a separate function to avoid code duplication for other
     # Bessel functions.
-    for k in range(1, diff_n + 1):
-        # https://dlmf.nist.gov/10.6#E7 where the sum is computed using
-        # a convolution
-        kernel = np.zeros(2 * diff_n + 1)
-        indices = np.arange(diff_n - k, diff_n + 1 + k, 2)
-        n_k = np.arange(k + 1)
-        kernel[indices] = (-1)**n_k * binom(k, n_k) / 2**k
-        # cy[k, diff_n:-diff_n] = np.convolve(cy[0], kernel[::-1], mode="valid")
-        cy[k, diff_n:-diff_n] = np.apply_along_axis(
-            lambda x: np.convolve(x, kernel[::-1], mode="valid"), 0, cy[0])
+    # for k in range(1, diff_n + 1):
+    #     # https://dlmf.nist.gov/10.6#E7 where the sum is computed using
+    #     # a convolution
+    #     kernel = np.zeros(2 * diff_n + 1)
+    #     indices = np.arange(diff_n - k, diff_n + 1 + k, 2)
+    #     n_k = np.arange(k + 1)
+    #     kernel[indices] = (-1)**n_k * binom(k, n_k) / 2**k
+    #     # cy[k, diff_n:-diff_n] = np.convolve(cy[0], kernel[::-1], mode="valid")
+    #     cy[k, diff_n:-diff_n] = np.apply_along_axis(
+    #         lambda x: np.convolve(x, kernel[::-1], mode="valid"), 0, cy[0])
 
-    if diff_n > 0:
-        # remove the first and last diff_n orders which were only needed for
-        # the derivatives
-        cy = cy[:, diff_n:-diff_n].astype(output_dtype)
+    # if diff_n > 0:
+    #     # remove the first and last diff_n orders which were only needed for
+    #     # the derivatives
+    #     cy = cy[:, diff_n:-diff_n].astype(output_dtype)
 
     return cy
 

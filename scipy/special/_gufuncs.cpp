@@ -332,11 +332,17 @@ _gufuncs_module_exec(PyObject *module)
     );
     PyModule_AddObjectRef(module, "_poisson_binom_cdf", _poisson_binom_cdf);
 
-    PyObject *_hankel1_all =
-        xsf::numpy::gufunc({xsf::numpy::compose{xsf::numpy::use_long_long_int()},
-                            static_cast<xsf::numpy::dDi_D1>(xsf::cyl_hankel_1_all),
-                            static_cast<xsf::numpy::fFi_F1>(xsf::cyl_hankel_1_all)},
-                           1, "_hankel1_all", nullptr, "(),(),()->(np1)", bessel_map_dims);
+    PyObject *_hankel1_all = xsf::numpy::gufunc(
+        {
+            // static_cast<xsf::numpy::fF_F1>(xsf::cyl_hankel_1_all),
+            static_cast<xsf::numpy::dD_D1>(xsf::cyl_hankel_1_all)
+        },
+        1,
+        "_hankel1_all",
+        nullptr,
+        "(),()->(np1)",
+        bessel_map_dims
+    );
     PyModule_AddObjectRef(module, "_hankel1_all", _hankel1_all);
 
     return 0;
